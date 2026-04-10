@@ -16,24 +16,26 @@ Piece[,] board = new Piece[,] {
                         { Piece.____, Piece.____, Piece.____, Piece.____, Piece.____, Piece.____, Piece.____, Piece.____ },
                         { Piece.____, Piece.____, Piece.____, Piece.____, Piece.____, Piece.____, Piece.____, Piece.____ },
                         { Piece.____, Piece.____, Piece.____, Piece.____, Piece.____, Piece.____, Piece.____, Piece.____ },
-                        { Piece.Pawn, Piece.Pawn, Piece.Pawn, Piece.Pawn, Piece.Pawn, Piece.Pawn, Piece.Pawn, Piece.Pawn },
-                        { Piece.Rook, Piece.Knight, Piece.Bishop, Piece.King, Piece.Queen, Piece.Bishop, Piece.Knight, Piece.Rook }};
+                        { Piece.Pawni, Piece.Pawni, Piece.Pawni, Piece.Pawni, Piece.Pawni, Piece.Pawni, Piece.Pawni, Piece.Pawni },
+                        { Piece.Rooki, Piece.Knighti, Piece.Bishopi, Piece.Kingi, Piece.Queeni, Piece.Bishopi, Piece.Knighti, Piece.Rooki }};
 
 // Keeps track of the position of the selected square
 int selectedRow = 3;
 int selectedColumn = 3;
 string WhSq(int Row, int Col) // White square
 {
+    Console.ResetColor();
     Console.BackgroundColor = ConsoleColor.White;
     bool isSelected = (Row == selectedRow && Col == selectedColumn);
     string whiteSquare = ANSI(board[Row, Col], isSelected ? 0x85FFB2 : 0xFFFFFF);
-    Console.ResetColor();
     return whiteSquare;
-}
+}   
 string BlSq(int Row, int Col) // Black square
-{
-    bool isSelected = (Row == selectedRow && Col == selectedColumn);
-    string blackSquare = ANSI(board[Row, Col], isSelected? 0x85FFB2 : 0x3B3B3B);
+{   
+    Console.ResetColor();
+    Console.BackgroundColor = ConsoleColor.DarkGray;
+    bool/*?*/                   isSelected = (Row == selectedRow && Col == selectedColumn);
+    string blackSquare = ANSI(board[Row, Col], isSelected? 0x85FFB2 : 0xfffff);
     return blackSquare;
 }
 
@@ -46,6 +48,23 @@ while (true)
         for (int height = 0; height < 8; height++)
         {
             Console.SetCursorPosition(3 + length * 8, 2 + height * 3);
+            if (board[selectedRow, selectedColumn] == Piece.Rooki ||
+                board[selectedRow, selectedColumn] == Piece.Knighti ||
+                board[selectedRow, selectedColumn] == Piece.Bishopi ||
+                board[selectedRow, selectedColumn] == Piece.Queeni ||
+                board[selectedRow, selectedColumn] == Piece.Kingi ||
+                board[selectedRow, selectedColumn] == Piece.Pawni)
+            {
+                Console.ForegroundColor = ConsoleColor.White;
+            }
+            else if (board[selectedRow, selectedColumn] == Piece.____)
+            {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+            }
+            else
+            {
+                Console.ForegroundColor = ConsoleColor.Black;
+            }
             if ((length + height) % 2 == 0)
             {
                 Console.Write($"{WhSq(height, length)}\t");
@@ -58,7 +77,6 @@ while (true)
     }
 
     // Move the selected square using arrow keys
-    Console.WriteLine(selectedRow + "," + selectedColumn);
     ConsoleKey Navigate = Console.ReadKey(true).Key;
     switch (Navigate)
     {
@@ -81,5 +99,5 @@ while (true)
 }
 enum Piece
 {
-    Rook, Knight, Bishop, King, Queen, Pawn, ____
+    Rooki, Rook, Knighti, Knight, Bishopi, Bishop, Kingi, King, Queeni, Queen, Pawni, Pawn, ____
 }
