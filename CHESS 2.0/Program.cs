@@ -22,22 +22,13 @@ Piece[,] board = new Piece[,] {
 // Keeps track of the position of the selected square
 int selectedRow = 3;
 int selectedColumn = 3;
-string WhSq(int Row, int Col) // White square
+void DrawSquare(int Row, int Col, bool isWhite) // White square
 {
-    Console.ResetColor();
-    Console.BackgroundColor = ConsoleColor.White;
     bool isSelected = (Row == selectedRow && Col == selectedColumn);
-    string whiteSquare = ANSI(board[Row, Col], isSelected ? 0x85FFB2 : 0xFFFFFF);
-    return whiteSquare;
-}   
-string BlSq(int Row, int Col) // Black square
-{   
+    Console.BackgroundColor = isSelected? ConsoleColor.Green : isWhite? ConsoleColor.White : ConsoleColor.DarkGray;
+    Console.WriteLine(board[Row, Col]);
     Console.ResetColor();
-    Console.BackgroundColor = ConsoleColor.DarkGray;
-    bool/*?*/                   isSelected = (Row == selectedRow && Col == selectedColumn);
-    string blackSquare = ANSI(board[Row, Col], isSelected? 0x85FFB2 : 0xfffff);
-    return blackSquare;
-}
+}   
 
 // Start of game loop
 while (true)
@@ -48,30 +39,30 @@ while (true)
         for (int height = 0; height < 8; height++)
         {
             Console.SetCursorPosition(3 + length * 8, 2 + height * 3);
-            if (board[selectedRow, selectedColumn] == Piece.Rooki ||
-                board[selectedRow, selectedColumn] == Piece.Knighti ||
-                board[selectedRow, selectedColumn] == Piece.Bishopi ||
-                board[selectedRow, selectedColumn] == Piece.Queeni ||
-                board[selectedRow, selectedColumn] == Piece.Kingi ||
-                board[selectedRow, selectedColumn] == Piece.Pawni)
+            if (board[height, length] == Piece.Rooki ||
+                board[height, length] == Piece.Knighti ||
+                board[height, length] == Piece.Bishopi ||
+                board[height, length] == Piece.Queeni ||
+                board[height, length] == Piece.Kingi ||
+                board[height, length] == Piece.Pawni)
             {
-                Console.ForegroundColor = ConsoleColor.White;
+                Console.ForegroundColor = ConsoleColor.Blue;
             }
-            else if (board[selectedRow, selectedColumn] == Piece.____)
+            else if (board[height, length] == Piece.____)
             {
                 Console.ForegroundColor = ConsoleColor.Yellow;
             }
             else
             {
-                Console.ForegroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.Red;
             }
             if ((length + height) % 2 == 0)
             {
-                Console.Write($"{WhSq(height, length)}\t");
+                DrawSquare(height, length, true);
             }
             else
             {
-                Console.Write($"{BlSq(height, length)}\t");
+                DrawSquare(height, length, false);
             }
         }
     }
@@ -94,6 +85,10 @@ while (true)
 
         case ConsoleKey.RightArrow:
             selectedColumn++;
+            break;
+
+        case ConsoleKey.Enter:
+            
             break;
     }
 }
