@@ -1,5 +1,8 @@
 ﻿
 // Places the pieces in the starting setup
+bool[,] canBeCaptured = new bool[8, 8];
+bool[,] canBeMovedTo = new bool[8, 8];
+
 Piece[,] board = new Piece[,] { 
                         { Piece._Rook__, Piece.Knight_, Piece.Bishop_, Piece._King__, Piece._Queen_, Piece.Bishop_, Piece.Knight_, Piece._Rook__ },
                         { Piece._Pawn__, Piece._Pawn__, Piece._Pawn__, Piece._Pawn__, Piece._Pawn__, Piece._Pawn__, Piece._Pawn__, Piece._Pawn__ },
@@ -66,9 +69,16 @@ void DrawSquare(int Row, int Col, bool canBeCaptured, bool canBeMovedTo) // Draw
     Console.Write("       ");
     Console.SetCursorPosition(Col * 7, Row * 3);
 }
-
+void SetPiecePos(Piece piece, int tempSelectedRow, int tempSelectedColumn)
+{
+    board[tempSelectedRow, tempSelectedColumn] = Piece._______;
+    board[selectedRow, selectedColumn] = piece;
+    DrawBoard();
+}
 void PawnMove(int tempSelectedRow, int tempSelectedColumn)
 {
+    
+    
     Piece position = board[tempSelectedRow, tempSelectedColumn];
     bool isWhite = true;
 
@@ -85,22 +95,42 @@ void PawnMove(int tempSelectedRow, int tempSelectedColumn)
     {
         if (isWhite)
         {
-            if (board[tempSelectedRow - 1, tempSelectedColumn] == Piece._______) // Shows the squares the pawn can move to, if any
+            if (board[tempSelectedRow - 1, tempSelectedColumn] == Piece._______ ||
+                board[tempSelectedRow - 1, tempSelectedColumn - 1] != Piece._______ ||
+                board[tempSelectedRow - 1, tempSelectedColumn + 1] != Piece._______) // Shows the squares the pawn can move to, if any
             {
-                DrawSquare(tempSelectedRow - 1, tempSelectedColumn, false, true);
-                if (tempSelectedRow == 6 && board[tempSelectedRow - 2, tempSelectedColumn] == Piece._______)
+                if (board[tempSelectedRow - 1, tempSelectedColumn] == Piece._______)
                 {
-                    DrawSquare(tempSelectedRow - 2, tempSelectedColumn, false, true);
+                    DrawSquare(tempSelectedRow - 1, tempSelectedColumn, false, true);
+                    canBeMovedTo[tempSelectedRow - 1, tempSelectedColumn] = true;
+                    if (tempSelectedRow == 6 && board[tempSelectedRow - 2, tempSelectedColumn] == Piece._______)
+                    {
+                        DrawSquare(tempSelectedRow - 2, tempSelectedColumn, false, true);
+                        canBeMovedTo[tempSelectedRow - 2, tempSelectedColumn] = true;
+                    }
+                }
+
+                if (board[tempSelectedRow - 1, tempSelectedColumn - 1] != Piece._______ ||
+                board[tempSelectedRow - 1, tempSelectedColumn + 1] != Piece._______)
+                {
+                    DrawSquare(tempSelectedRow - 1, tempSelectedColumn - 1, true, false);
+                    canBeCaptured[tempSelectedRow - 1, tempSelectedColumn - 1] = true;
+                    DrawSquare(tempSelectedRow - 1, tempSelectedColumn + 1, true, false);
+                    canBeCaptured[tempSelectedRow - 1, tempSelectedColumn + 1] = true;
                 }
             }
-            else
+            else { break; }
+        }
+
+        if (MoveSelectedSquare() == ConsoleKey.Enter) // Moves the pawn if possible
+        {
+            if (canBeMovedTo[selectedRow, selectedColumn] || canBeCaptured[selectedRow, selectedColumn]) // Step forward / capture
             {
+                SetPiecePos(Piece._Pawni_, tempSelectedRow, tempSelectedColumn);
                 break;
             }
-            if (MoveSelectedSquare() == ConsoleKey.Enter && board[selectedRow, selectedColumn] == Piece._______) // Moves the pawn if possible
+            else if (selectedRow == tempSelectedRow && selectedColumn == tempSelectedColumn) // Selecting original pos to deselect
             {
-                board[tempSelectedRow, tempSelectedColumn] = Piece._______;
-                board[selectedRow, selectedColumn] = Piece._Pawni_;
                 DrawBoard();
                 break;
             }
@@ -110,8 +140,9 @@ void PawnMove(int tempSelectedRow, int tempSelectedColumn)
 
 void DrawBoard()
 {
+    Console.ResetColor();
     Console.Clear();
-    for (int length = 0; length < 8; length++) // Draws the board
+    for (int length = 0; length < 8; length++)
     {
         for (int height = 0; height < 8; height++)
         {
@@ -121,7 +152,6 @@ void DrawBoard()
         }
     }
 }
-DrawBoard();
 void UpdateSquare(int offsetRow, int offsetCol)
 {
     DrawSquare(selectedRow + offsetRow, selectedColumn + offsetCol, false, false);
@@ -132,31 +162,45 @@ ConsoleKey MoveSelectedSquare() // Navigate the board
     switch (Navigate)
     {
         case ConsoleKey.UpArrow:
-            selectedRow--;
-            UpdateSquare(1, 0);
-            UpdateSquare(0, 0);
+            if (selectedRow > 0)
+            {
+                selectedRow--;
+                UpdateSquare(1, 0);
+                UpdateSquare(0, 0);
+            }
             break;
 
         case ConsoleKey.DownArrow:
-            selectedRow++;
-            UpdateSquare(-1, 0);
-            UpdateSquare(0, 0);
+            if (selectedRow < 7)
+            {
+                selectedRow++;
+                UpdateSquare(-1, 0);
+                UpdateSquare(0, 0);
+            }
             break;
 
         case ConsoleKey.LeftArrow:
-            selectedColumn--;
-            UpdateSquare(0, 1);
-            UpdateSquare(0, 0);
+            if (selectedColumn > 0)
+            {
+                selectedColumn--;
+                UpdateSquare(0, 1);
+                UpdateSquare(0, 0);
+            }
             break;
 
         case ConsoleKey.RightArrow:
-            selectedColumn++;
-            UpdateSquare(0, -1);
-            UpdateSquare(0, 0);
+            if (selectedColumn < 7)
+            {
+                selectedColumn++;
+                UpdateSquare(0, -1);
+                UpdateSquare(0, 0);  
+            }
             break;
     }
     return Navigate;
 }
+
+DrawBoard();
 
 // Start of game loop
 while (true)
