@@ -117,8 +117,18 @@ void SetPiecePos(Piece piece, int tempSelectedRow, int tempSelectedColumn)
 
 void CanBeMovedToPos(int rowOffset, int colOffset, int tempSelectedRow, int tempSelectedColumn)
 {
-    canBeMovedTo[tempSelectedRow + rowOffset, tempSelectedColumn + colOffset] = true;
-    DrawSquare(tempSelectedRow + rowOffset, tempSelectedColumn + colOffset, false, true); // Updates square to be able to move to
+    int row = tempSelectedRow + rowOffset;
+    int col = tempSelectedColumn + colOffset;
+    if (row > 7)
+    {
+        row = 7;
+    }
+    else if (row < 0)
+    {
+        row = 0;
+    }
+    canBeMovedTo[row, col] = true;
+    DrawSquare(row, col, false, true); // Updates square to be able to move to
 }
 
 void CanBeCapturedPos(int rowOffset, int colOffset, int tempSelectedRow, int tempSelectedColumn)
@@ -168,18 +178,23 @@ void CanMoveUntilBlocked(int y, int x, int yOffset, int xOffset, int tempSelecte
         bool positiveX = xValue == x;
 
         int row = tempSelectedRow + yValue;
+        if (row > 7)
+        {
+            row = 7;
+        }
+        else if (row < 0)
+        {
+            row = 0;
+        }
         int col = tempSelectedColumn + xValue;
 
         if (positiveY? row < 8 : row >= 0 && // Checks if it's within bounds and if it's free
             positiveX? col < 8 : col >= 0 &&
             board[row, col] == Piece._______)
         {
-            if (y == 1) // This is needed cause otherwise the next if is impossible
+            if (y == 1 && board[row, col] == Piece._______) // This is needed cause otherwise the next if is impossible
             {
-                if (board[row, col] == Piece._______)
-                {
-                    CanBeMovedToPos(yValue, xValue, tempSelectedRow, tempSelectedColumn);
-                }
+                CanBeMovedToPos(yValue, xValue, tempSelectedRow, tempSelectedColumn);
             }
             if (canBeMovedTo[positiveY? row - yOffset : row + yOffset,
                 positiveX? col - xOffset : col + xOffset]) // Checks if the previous square is available
@@ -187,9 +202,9 @@ void CanMoveUntilBlocked(int y, int x, int yOffset, int xOffset, int tempSelecte
                 CanBeMovedToPos(yValue, xValue, tempSelectedRow, tempSelectedColumn);
             }
         }
-        else if (positiveY? row < 8 : row >= 0 && // Checks if it's within bounds and isn't free
-                 positiveX? col < 8 : col >= 0 &&
-                 board[row, col] != Piece._______)
+        if (positiveY? row < 8 : row >= 0 && // Checks if it's within bounds and isn't free
+            positiveX? col < 8 : col >= 0 &&
+            board[row, col] != Piece._______)
         {
             bool noDoubleCapture = false;
             if (yValue == -y)
@@ -216,7 +231,6 @@ void CanMoveUntilBlocked(int y, int x, int yOffset, int xOffset, int tempSelecte
                 !isWhitePiece(board[row, col]))
             {
                 CanBeCapturedPos(yValue, xValue, tempSelectedRow, tempSelectedColumn);
-                noDoubleCapture = true;
             }
         }
     }
