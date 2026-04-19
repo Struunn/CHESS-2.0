@@ -1,5 +1,7 @@
 ﻿
 // Places the pieces in the starting setup
+using System.ComponentModel;
+
 bool[,] canBeCaptured = new bool[8, 8];
 bool[,] canBeMovedTo = new bool[8, 8];
 
@@ -20,7 +22,7 @@ Piece[,] board = new Piece[,] {
                         { Piece._Pawn__, Piece._Pawn__, Piece._Pawn__, Piece._Pawn__, Piece._Pawn__, Piece._Pawn__, Piece._Pawn__, Piece._Pawn__ },
                         { Piece._______, Piece._______, Piece._______, Piece._______, Piece._______, Piece._______, Piece._______, Piece._______ },
                         { Piece._______, Piece._______, Piece._______, Piece._______, Piece._______, Piece._______, Piece._______, Piece._______ },
-                        { Piece._______, Piece._______, Piece._______, Piece._______, Piece._______, Piece._______, Piece._______, Piece._______ },
+                        { Piece._______, Piece._______, Piece._______, Piece._Rooki_, Piece._______, Piece._______, Piece._______, Piece._______ },
                         { Piece._______, Piece._______, Piece._______, Piece._______, Piece._______, Piece._______, Piece._______, Piece._______ },
                         { Piece._Pawni_, Piece._Pawni_, Piece._Pawni_, Piece._Pawni_, Piece._Pawni_, Piece._Pawni_, Piece._Pawni_, Piece._Pawni_ },
                         { Piece._Rooki_, Piece.Knighti, Piece.Bishopi, Piece.Queeni_, Piece._Kingi_, Piece.Bishopi, Piece.Knighti, Piece._Rooki_ }};
@@ -108,24 +110,24 @@ void DrawSquare(int Row, int Col, bool canBeCaptured, bool canBeMovedTo) // Draw
 
 void SetPiecePos(Piece piece, int tempSelectedRow, int tempSelectedColumn)
 {
-    board[tempSelectedRow, tempSelectedColumn] = Piece._______;
-    board[selectedRow, selectedColumn] = piece;
-    DrawBoard();
+    board[tempSelectedRow, tempSelectedColumn] = Piece._______; // Sets old place to free
+    board[selectedRow, selectedColumn] = piece; // Sets new place to piece
+    DrawBoard(); // Updates every square
 }
 
 void CanBeMovedToPos(int rowOffset, int colOffset, int tempSelectedRow, int tempSelectedColumn)
 {
     canBeMovedTo[tempSelectedRow + rowOffset, tempSelectedColumn + colOffset] = true;
-    DrawSquare(tempSelectedRow + rowOffset, tempSelectedColumn + colOffset, false, true);
+    DrawSquare(tempSelectedRow + rowOffset, tempSelectedColumn + colOffset, false, true); // Updates square to be able to move to
 }
 
 void CanBeCapturedPos(int rowOffset, int colOffset, int tempSelectedRow, int tempSelectedColumn)
 {
-    if (tempSelectedColumn + colOffset >= 0 && tempSelectedColumn + colOffset <= 7 &&
-        tempSelectedRow + rowOffset >= 0 && tempSelectedRow + rowOffset <= 7) // Makes sure it doesn't go out of bounds
+    if (tempSelectedColumn + colOffset >= 0 && tempSelectedColumn + colOffset <= 7 && // Checks if it's within bounds
+        tempSelectedRow + rowOffset >= 0 && tempSelectedRow + rowOffset <= 7)
     {
         canBeCaptured[tempSelectedRow + rowOffset, tempSelectedColumn + colOffset] = true;
-        DrawSquare(tempSelectedRow + rowOffset, tempSelectedColumn + colOffset, true, false);
+        DrawSquare(tempSelectedRow + rowOffset, tempSelectedColumn + colOffset, true, false); // Updates square to be able to capture to
     }
 }
 
@@ -135,13 +137,13 @@ Piece? GetPosition(int rowOffset, int colOffset, int tempSelectedRow, int tempSe
     int Row = tempSelectedRow + rowOffset;
     int Col = tempSelectedColumn + colOffset;
 
-    if (Row >= 0 && Row < 8 && Col >= 0 && Col < 8)
+    if (Row >= 0 && Row < 8 && Col >= 0 && Col < 8) // Checks if it's within bounds
     {
-        return position = board[Row, Col];
+        return position = board[Row, Col]; // Returns the piece on the requested square location
     }
     else
     {
-        return null;
+        return null; // If it's out of bounds it returns null
     }
 }
 
@@ -155,6 +157,98 @@ bool IsWhite(Piece piece, int tempSelectedRow, int tempSelectedColumn)
     else
     {
         return isWhite = false;
+    }
+}
+
+void CanMoveUntilBlocked(int y, int x, int yOffset, int xOffset, int tempSelectedRow, int tempSelectedColumn)
+{
+    void MoveVertical(int yValue, int xValue)
+    {
+        bool positiveY = yValue == y;
+        bool positiveX = xValue == x;
+
+        int row = tempSelectedRow + yValue;
+        int col = tempSelectedColumn + xValue;
+
+        if (positiveY? row < 8 : row >= 0 && // Checks if it's within bounds and if it's free
+            positiveX? col < 8 : col >= 0 &&
+            board[row, col] == Piece._______)
+        {
+            if (y == 1) // This is needed cause otherwise the next if is impossible
+            {
+                if (board[row, col] == Piece._______)
+                {
+                    CanBeMovedToPos(yValue, xValue, tempSelectedRow, tempSelectedColumn);
+                }
+            }
+            if (canBeMovedTo[positiveY? row - yOffset : row + yOffset,
+                positiveX? col - xOffset : col + xOffset]) // Checks if the previous square is available
+            {
+                CanBeMovedToPos(yValue, xValue, tempSelectedRow, tempSelectedColumn);
+            }
+        }
+        else if (positiveY? row < 8 : row >= 0 && // Checks if it's within bounds and isn't free
+                 positiveX? col < 8 : col >= 0 &&
+                 board[row, col] != Piece._______)
+        {
+            bool noDoubleCapture = false;
+            if (yValue == -y)
+            {
+                for (int i = 1; i < 7; i++)
+                {
+                    if (tempSelectedRow - i >= 0 && canBeCaptured[tempSelectedRow - i, tempSelectedColumn])
+                    {
+                        noDoubleCapture = true;
+                    }
+                }
+            }
+            else if (yValue == y)
+            {
+                for (int i = 1; i < 7; i++)
+                {
+                    if (tempSelectedRow + i < 8 && canBeCaptured[tempSelectedRow + i, tempSelectedColumn])
+                    {
+                        noDoubleCapture = true;
+                    }
+                }
+            }
+            if (!noDoubleCapture &&
+                !isWhitePiece(board[row, col]))
+            {
+                CanBeCapturedPos(yValue, xValue, tempSelectedRow, tempSelectedColumn);
+                noDoubleCapture = true;
+            }
+        }
+    }
+
+    MoveVertical(y, x);
+
+    MoveVertical(-y, -x);
+
+    if (tempSelectedColumn + y < 8 && tempSelectedRow + x < 8 && // Checks if it's within bounds and if it's free
+        board[tempSelectedRow + x, tempSelectedColumn + y] == Piece._______)
+    {
+        if (y == 1) // This is needed cause otherwise the next if is impossible
+        {
+            CanBeMovedToPos(x, y, tempSelectedRow, tempSelectedColumn);
+        }
+        if (canBeMovedTo[tempSelectedRow + x - xOffset, tempSelectedColumn + y - yOffset]) // Checks if the previous square is available
+        {
+            CanBeMovedToPos(x, y, tempSelectedRow, tempSelectedColumn);
+        }
+    }
+
+    if (tempSelectedColumn - y >= 0 && tempSelectedRow - x >= 0 && // Checks if it's within bounds and if it's free
+        board[tempSelectedRow - x, tempSelectedColumn - y] == Piece._______)
+    {
+        if (y == 1) // This is needed cause otherwise the next if is impossible
+        {
+            CanBeMovedToPos(-x, -y, tempSelectedRow, tempSelectedColumn);
+        }
+        if (canBeMovedTo[tempSelectedRow - x + xOffset, tempSelectedColumn - y + yOffset]) // Checks if the previous square is available
+        {
+            CanBeMovedToPos(-x, -y, tempSelectedRow, tempSelectedColumn);
+        }
     }
 }
 
@@ -215,16 +309,16 @@ void PawnMove(int tempSelectedRow, int tempSelectedColumn) // ----- PAWN -----
             }
         }
 
-        // ----- Move Pawn -----
-        if (MoveSelectedSquare() == ConsoleKey.Enter) // Moves the pawn if possible
+        // ----- Move Piece -----
+        if (MoveSelectedSquare() == ConsoleKey.Enter) // Moves the piece if possible
         {
-            if (canBeMovedTo[selectedRow, selectedColumn] == true) // Step forward
+            if (canBeMovedTo[selectedRow, selectedColumn]) // Move
             {
                 SetPiecePos(isWhite? Piece._Pawni_ : Piece._Pawn__, tempSelectedRow, tempSelectedColumn);
                 Promotion();
                 break;
             }
-            if (canBeCaptured[selectedRow, selectedColumn] == true) // Capture
+            if (canBeCaptured[selectedRow, selectedColumn]) // Capture
             {
                 SetPiecePos(isWhite ? Piece._Pawni_ : Piece._Pawn__, tempSelectedRow, tempSelectedColumn);
                 Promotion();
@@ -245,14 +339,17 @@ void PawnMove(int tempSelectedRow, int tempSelectedColumn) // ----- PAWN -----
                 board[isWhite ? 0 : 7, i] = isWhite ? whitePiece : blackPiece;
                 SetPiecePos(isWhite ? whitePiece : blackPiece, tempSelectedRow, tempSelectedColumn);
             }
-            
+            string[] options = {$"{(isWhite? Piece.Queeni_ : Piece._Queen_)}",
+                                        $"{(isWhite ? Piece._Rooki_ : Piece._Rook__)}",
+                                        $"{(isWhite? Piece.Bishopi : Piece.Bishop_)}",
+                                        $"{(isWhite? Piece.Knighti : Piece.Knight_)}"};
+            int selected = 0;
+
             for (int i = 0; i < 7; i++)
             {
                 if (board[0, i] == Piece._Pawni_ || board[7, i] == Piece._Pawn__)
                 {
                     Console.ResetColor();
-                    string[] options = {"Queen", "Rook", "Bishop", "Knight"};
-                    int selected = 0;
 
                     while (board[0, i] == Piece._Pawni_ || board[7, i] == Piece._Pawn__)
                     {
@@ -313,57 +410,25 @@ void PawnMove(int tempSelectedRow, int tempSelectedColumn) // ----- PAWN -----
 void RookMove(int tempSelectedRow, int tempSelectedColumn) // ----- ROOK -----
 {
     bool isWhite = IsWhite(Piece._Rooki_, tempSelectedRow, tempSelectedColumn);
-    bool blockedUp = false;
     while (true)
     {
         if (isWhite)
         {
-
-            for (int i = 0; i < 8; i++)
+            for (int i = 1; i < 8; i++)
             {
-                if (tempSelectedRow + i < 8)
-                {
-                    bool blocked = false;
-                    if (board[tempSelectedRow + i, tempSelectedColumn] == Piece._______)
-                    {
-                        CanBeMovedToPos(i, 0, tempSelectedRow, tempSelectedColumn);
-                    }
-                    else
-                    {
-                        blocked = true;
-                    }
-                }
-                if (tempSelectedRow - i >= 0)
-                {
-                    if (board[tempSelectedRow - i, tempSelectedColumn] != Piece._______)
-                    {
-                        blockedUp = true;
-                    }
-                    if (board[tempSelectedRow - i, tempSelectedColumn] == Piece._______ && !blockedUp)
-                    {
-                        CanBeMovedToPos(-i, 0, tempSelectedRow, tempSelectedColumn);
-                    }
-                }
-                if (tempSelectedColumn + i < 8 && board[tempSelectedRow, tempSelectedColumn + i] == Piece._______)
-                {
-                    CanBeMovedToPos(0, i, tempSelectedRow, tempSelectedColumn);
-                }
-                if (tempSelectedColumn - i >= 0 && board[tempSelectedRow, tempSelectedColumn - i] == Piece._______)
-                {
-                    CanBeMovedToPos(0, -i, tempSelectedRow, tempSelectedColumn);
-                }
+                CanMoveUntilBlocked(i, 0, 1, 0, tempSelectedRow, tempSelectedColumn);
             }
         }
 
-        // ----- Move Rook -----
-        if (MoveSelectedSquare() == ConsoleKey.Enter) // Moves the rook if possible
+        // ----- Move Piece -----
+        if (MoveSelectedSquare() == ConsoleKey.Enter) // Moves the piece if possible
         {
-            if (canBeMovedTo[selectedRow, selectedColumn] == true) // Move
+            if (canBeMovedTo[selectedRow, selectedColumn]) // Move
             {
                 SetPiecePos(isWhite ? Piece._Rooki_ : Piece._Rook__, tempSelectedRow, tempSelectedColumn);
                 break;
             }
-            if (canBeCaptured[selectedRow, selectedColumn] == true) // Capture
+            if (canBeCaptured[selectedRow, selectedColumn]) // Capture
             {
                 SetPiecePos(isWhite ? Piece._Rooki_ : Piece._Rook__, tempSelectedRow, tempSelectedColumn);
                 break;
