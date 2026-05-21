@@ -807,7 +807,7 @@ bool PawnMove(int tempSelectedRow, int tempSelectedColumn, bool checkIfPieceCanB
 
         if (isWhite ? !WhiteKingCheck(0, 0, false) : !BlackKingCheck(0, 0, false)) // Checks if the king is in check when the Pawn is in the new position
         {
-            board[isWhite ? tempSelectedRow - 1 : tempSelectedRow + 1, tempSelectedColumn] = Piece._______; // Sets the target square back to empty
+            board[isWhite ? tempSelectedRow - squaresForward : tempSelectedRow + squaresForward, tempSelectedColumn] = Piece._______; // Sets the target square back to empty
 
             if (checkIfPieceCanBlock) // Checks if it needs to just return a bool or actual move
             {
